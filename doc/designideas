@@ -1,0 +1,77 @@
+Things what are in Avern 0.1
+
+Toplevel constructs are modules, interfaces, typeclasses, types, declarations, ffi declarations
+
+Modules
+  Files induce modules
+  We also allow toplevel module declarations and nested module declarations
+  However, there is definitely no letmodule and no functors
+  modules ascribe to signatures
+
+Signatures
+  Signature files have a different file extension
+  Module and top level signature declarations
+  Type and field hiding
+  We may need withtype, as otherwise diamond inclusion problems
+    So maybe checking this is hard
+  Checking ascription *should* be simple with no functors.
+
+Typeclasses
+  We're going to need constructor classes
+
+Declarations
+  expressions
+  or let bindings
+  (or ref allocation differently?)
+
+Expressions
+  ints(infinite precision!), floats, strings(unicode), manipulations on these
+  named and anonymous tuples and datatypes
+  bools, list syntax can be added later, actually
+  ML style refs for now?
+  _ID should be named _ pattern
+  I kind of want type ascription expressions "exp : type" which can fail compilation
+
+Once we get all this, we can think about things like inline regexps.
+
+Fake EBNF
+  Not thinking about WS or associativity or precedence
+  for WS, {, } should mean what they mean in hs
+
+UpperID := [A-Z][a-zA-Z0-9_]*
+ID : = LowerID | SymbolID
+LowerID := [a-z][A-Za-z0-9]*
+SymbolID = <some symbols>*
+
+File := TopDecl*
+
+TopDecl := ModDecl | SigDecl | TCDecl | TypeDecl | TermDecl | FFIDecl
+
+ModDecl := module UpperID = Mod
+         | module UpperID <: Sig = Mod
+         | module UpperId = Mod <: Sig
+
+Mod := UpperID
+     | { TopDecl* }
+
+SigDecl := signature UpperId := Sig
+
+Sig := UpperId
+     | Sig with LowerID = TypeExp
+     | { DeclInSig* }
+
+DeclInSig := TypeDecl | TypeAsc | <some TC thing?>
+
+TypeAsc := LowerId : TypeExp
+
+TCDecl := <typeclass declaration>
+
+TypeDecl := type LowerExp = TypeExp
+
+TypeExp := ...
+
+TermDecl = Exp | LowerExp = Exp | LowerExp := Exp
+
+Exp := ...
+
+FFIDecl := ...

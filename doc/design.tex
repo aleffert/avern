@@ -1,0 +1,202 @@
+%
+%  untitled
+%
+%  Created by Akiva Leffert on 2008-03-11.
+%  Copyright (c) 2008 __MyCompanyName__. All rights reserved.
+%
+\documentclass[]{article}
+
+% Use utf-8 encoding for foreign characters
+\usepackage[utf8]{inputenc}
+
+% Setup for fullpage use
+\usepackage{fullpage}
+
+% Uncomment some of the following if you use the features
+%
+% Running Headers and footers
+%\usepackage{fancyhdr}
+
+% Multipart figures
+%\usepackage{subfigure}
+
+% More symbols
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+%\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Surround parts of graphics with box
+\usepackage{boxedminipage}
+
+% Package for including code in the document
+\usepackage{listings}
+
+% If you want to generate a toc for each chapter (use with book)
+\usepackage{minitoc}
+
+% This is now the recommended way for checking for PDFLaTeX:
+\usepackage{ifpdf}
+
+%\newif\ifpdf
+%\ifx\pdfoutput\undefined
+%\pdffalse % we are not running PDFLaTeX
+%\else
+%\pdfoutput=1 % we are running PDFLaTeX
+%\pdftrue
+%\fi
+
+\ifpdf
+\usepackage[pdftex]{graphicx}
+\else
+\usepackage{graphicx}
+\fi
+
+\newcommand{\avern}{\textsc{Avern}}
+
+\title{\textsc{Avern} Design Document}
+\author{Akiva Leffert}
+
+\begin{document}
+
+\ifpdf
+\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
+\else
+\DeclareGraphicsExtensions{.eps, .jpg}
+\fi
+
+\maketitle
+
+\section{Manifesto}
+Functional programming is great. Types are great. Yet, I often find myself dropping down into {\textsc{Python}} when I need to get something done that interacts with the outside world or when I don't feel like writing libraries. Additionally, languages like \textsc{SML} and \textsc{Haskell}, while good languages with many redeeming qualities,  make writing imperative code painful and dirty. Sometimes, I just need to implement a known imperative algorithm, or hide something stateful deep inside my code. Thus, \avern\  a strongly typed functional language with a strong imperative flavor where you can just hack stuff up, easily call out to standard unix tools, interface with C, and write imperative code when the need arises without rewriting your entire program into the IO monad or getting your code dirty and syntax heavy. 
+
+\section{Design Goals}
+\subsection{Preliminaries}
+\avern\ may be designed for hacking, but I am still a type theorist and so don't plan to do anything completely crazy. That means lexical scoping, a mostly context free grammar (possibly modulo operators), and as few runtime checks as possible.
+
+\subsection{Syntax}
+Syntax should be regular, predictable, parseable, and white space sensitive. Code is written once, read many times and, in my experience white space sensitive code is easier to read and write. I also find that code which can be pronounced as much as possible is easier to process and understand, white space syntax minimizes extraneous unpronounceable symbols. This also means that there will be a fair amount of syntactic sugar lying around. It is okay if things are not orthogonal, if it makes them easier to use.
+
+We will use \textsc{Haskell}-style lexical restriction of operators as well as syntactically enforced capitalization for types and type variables.
+
+\subsection{Type System}
+Type systems frequently require putting in lots of work up front, declaring new types, functorizing modules, The type system should be at least marginally comprehensible to mortals. This may be impossible, but we should at least have clear error messages and investigate IDE support.
+
+To this end of reducing the upfront work of static typing, we adopt the motto row polymorphism everywhere. \avern's type system does not need to be completely inferrable, but the location of any necessary annotations should be completely predictable. As in \textsc{SML} and \textsc{Haskell} we will use datatypes to reduce the syntactic overhead of fancy types.
+
+\subsection{IDE Support}
+\avern\ should be instrumented for debugging and be designed with debugging in mind! A few more !s! Other IDE features would be useful too, but I do not want to write an IDE and I am unsure how to interface with existing ones. This requires investigation.
+
+\subsection{Modules}
+We will not have a module system worth speaking of. Modules are hard. They create all sorts of complicated issues, are hard to understand, and are very heavy. I believe this sort of language will be best served by a \textsc{Python} or \textsc{Haskell}-esque modules as glorified namespaces system. To make up for a lack of module system, we will use type classes heavily. They're lightweight and mostly easy to understand. We are not interested in the complicated type level computations and tricks the \textsc{Haskell} people like to play\footnote{Actually, we think they're really neat, but we don't care about being able to do them here.} so we will not worry about things like functional dependencies and GADTs. Sometimes code does not need not to be art.
+
+We will also provide a mechanism for automatically generating type class instances using some form of intensional type analysis. This will enable users to write e.g. pickling modules without having to write a specific instance for each type.
+
+\subsection{Operators}
+Sometimes we have to do arithmetic. Integers are infinite precision by default, but we will also provide Int32, Int64, IntNative modules. \texttt{Haskell} mostly does a good job with dealing with literals as polymorphic constants so we will look into that. Bitwise operations are available on all types. In contrast, doubles are, by default, the native IEEE 754 float type, with Float32, Float64, and (possibly Float128) structures.
+
+\subsection{Patterns}
+We will provide some sort of active pattern mechanism. See Fully Functional Graph Structures for some examples. Additionally, this would allow us to pretend strings are lists of characters while implementing them as say, ropes.
+
+\subsection{FFI}
+Calls out to C should be easy. It should suffice to write a declaration declaring the C type of the external function. I am told the \textsc{Python} FFI is pretty good. This requires further investigation.
+
+\subsection{Concurrency}
+Concurrency is not in the initial version of the language, but the goal is to use a lightweight message passing style of concurrency. We will be providing callcc and possibly other features (e.g. delimited continuations) that require a continuation semantics. The language requires tail-call elimination.
+
+\subsection{Exceptions}
+We provide an extension mechanism similar to SML's with two differences. One, we don't tie the type of exceptions to the extensible sum type. The exception type is just one such type. Second, we mandate that exceptions carry a variety of information, including source location. Additionally, it should be possible to raise exceptions from C code using the FFI.
+
+\subsection{Printing}
+We will follow \textsc{Ocaml} in generating custom printf functions at compile time for type safe convenience.
+
+\subsection{Laziness}
+\avern follows a strict evaluation regime. However, we are considering some sort of lightweight syntactic support for laziness. Additionally, by making list a constructor class, we can provide library support for thunk based infinite streams without having to come up with a whole bunch of different names.
+
+\subsection{Comments}
+In addition to the usual block comments, there will be a standard documentation generation tool ala java doc. This will be a semantic tool, generating type information from the inference process and hyperlinks from symbol lookup.
+
+\section{Examples}
+First we declare an exception:
+
+\begin{verbatim}
+/* exception Argument
+ * Indicates an invalid argument.
+ * @input Reason argument is invalid
+ */
+exception Argument String
+\end{verbatim}
+
+The comments are C style. They contain information a la \texttt{javadoc} about what the exception is. The syntax resembles \texttt{haskell}, in the sense that there is no connecting \texttt{of} as in \texttt{SML}. We will see this more when we look at datatypes.
+\begin{verbatim}
+#!/usr/bin/avern
+/* factorial n 
+ * Computes the factorial of the input The factorial of the input.
+ * @input n
+ * @returns The factorial of the input.
+ */
+factorial : Num a => a -> a
+factorial (n < 0) = throw Argument(%"Factorial given negative input %" n)
+factorial (n == 0) = 1
+factorial (n > 0) = n * factorial(n - 1)
+
+\end{verbatim}
+\avern\ supports line comments with \texttt{\#}.
+
+The \texttt{fac} function is polymorphic over the \texttt{Integer} type class. The type annotation is entirely optional, but is used by the type inference engine if it is there. The precedence of \texttt{raise} is lower than that of application. Guards are used to complement pattern matching. Note also the \texttt{\%} function. This takes a string literal with format specifiers and converts it to a function of the appropriate arguments.
+
+We could rewrite this function to use a case statement:
+\begin{verbatim}
+factorial n =
+  case n of
+    n < 0 = throw Argument("Factorial given negative input $[n]" )
+    n = 0 = 1
+    n > 0 = n * factorial(n - 1)
+\end{verbatim}
+Here we can see the use of layout based syntax. Notice that the clauses of the \texttt{case} statement bind a new \texttt{n}, distinct from the argument. Furthermore, we can see the use of views and pattern classes.
+
+If we did not want to use exceptions, we could rewrite this in a monadic style:
+
+\begin{verbatim}
+
+instance m >>= : m a -> (a -> m b) -> m b
+instance m return : a -> m a
+instance m fail : String -> m a
+
+/* class Monad m
+ * Instances of 'Monad' should satisfy the following laws:
+ * return a >>= k  ==  k a
+ * m >>= return  ==  m
+ * m >>= (\x -> k x >>= h)  ==  (m >>= k) >>= h
+ * @input m Data type carried by the monad
+ */
+class Monad = {>>=, return, fail}
+
+/* type ? a
+ * The option type.
+ * @input a Data part of option
+type ? a = None | Some a
+
+instance ?
+  return x = Some x
+  fail x = None
+  None >>= f = None
+  (Some x) >>= f = f x
+
+factorial : Int -> ?Int
+factorial n = 
+  case n of
+    n < 0 = fail "Factorial given negative input $[n]"
+    n = 0 = return 1
+    n > 0 = do res <- factorial (n - 1)
+               return n * res
+\end{verbatim}
+
+\section{Semantics}
+
+\section{Libraries}
+At some level whatever goes in here is whatever I feel like writing. It should include a module for getting shell sorts of things done easily. Hopefully some of this will be automated through the FFI. Furthermore, we will not feel guilty about putting things in the top level namespace. It should be easy to read and write files and print stuff. Calling out to unix commands and obtaining their output should be easy.
+
+Additionally, we plan to use type and constructor classes heavily in designing our APIs. Finally, there should be a mechanism for easily downloading and installing libraries, as well as getting libraries included in the standard distribution.
+\end{document}

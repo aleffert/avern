@@ -1,0 +1,21 @@
+.consolePastInput {
+  background-color: #EE8888;
+  white-space: pre;
+}
+
+.consoleResult {
+  background-color: #88EE88;
+  white-space: pre;
+}
+
+#console {
+  background-color: #FFFFBB;
+  width: 600;
+}
+
+#consoleInput {
+  width:100%;
+  border:0;
+  overflow: auto;
+  height: 200;
+}
