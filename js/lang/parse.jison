@@ -22,16 +22,16 @@ rstmts : rstmts TERM stmt {
         $$ = Cons($stmt, Nil);
     };
 stmt
-    : cexp %prec SEXP {$$ = Lang.SExp($cexp); }
-    | idents IS cexp %prec SBIND {$$ = Lang.SBind($idents, $cexp);}
+    : cexp %prec SEXP {$$ = new Lang.SExp($cexp); }
+    | idents IS cexp %prec SBIND {$$ = new Lang.SBind($idents, $cexp);}
     ;
 
 cexp 
     : IF cexp THEN cexp ELSE cexp {
-        $$ = Lang.EIf($cexp1, $cexp2, $cexp3);
+        $$ = new Lang.EIf($cexp1, $cexp2, $cexp3);
     }
     | OPEN stmts CLOSE {
-        $$ = Lang.EStmts($stmts);
+        $$ = new Lang.EStmts($stmts);
     }
     | exp {
         $$ = $exp;
@@ -39,10 +39,10 @@ cexp
 ;
 exp
     : exp PLUS exp {
-        $$ = Lang.EBinOp($exp1, '+', $exp2);
+        $$ = new Lang.EBinOp($exp1, '+', $exp2);
     }
     | exp MINUS exp {
-        $$ = Lang.EBinOp($exp1, '-', $exp2);
+        $$ = new Lang.EBinOp($exp1, '-', $exp2);
     }
     | app %prec APP {
         $$ = $app;
@@ -60,21 +60,17 @@ exp
                     },
                     function (y, ys) {
                         return List.foldl(xs, ex, function (x, acc) {
-                            return Lang.EApp(acc, Lang.EEVar(x));
+                            return new Lang.EApp(acc, new Lang.EEVar(x));
                         });
                 });
             }
         );
-        $$ = List.foldl($idents, Nil, function (x, acc) {
-            return Lang.EApp(acc, x)
-        });
-        $$ = Lang.EEVar($idents);
     }
     
 ;
 
 app : app atom %prec APP {
-        $$ = Lang.EApp($app, $atom);
+        $$ = new Lang.EApp($app, $atom);
     }
     | atom {
         $$ = $atom;
@@ -85,10 +81,10 @@ atom
         $$ = $cexp;
     }
     | MINUS atom %prec UMINUS {
-        $$ = Lang.EUnOp('-', $atom);
+        $$ = new Lang.EUnOp('-', $atom);
     }
     | NUM {
-        $$ = Lang.ENumConst(yy.lexer.yytext);
+        $$ = new Lang.ENumConst(yytext);
     }
 ;
 
@@ -105,4 +101,4 @@ ridents
     }
     ;
 
-ident : IDENT { $$ = yy.lexer.yytext; };
+ident : IDENT { $$ = yytext; };

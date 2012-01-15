@@ -1,7 +1,7 @@
 var Cons = function (x, xs) {
     return {head : x, tail : xs};
 };
-var Nil = {};
+var Nil = {tag : 'nil'};
 
 var Case = function(x, nilFunc, constFunc) {
     if(x == Nil) {
